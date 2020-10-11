@@ -33,6 +33,10 @@ public interface DependencyResolutionManagementInternal extends DependencyResolu
 
     RulesMode getRulesMode();
 
+    String getLibrariesExtensionName();
+
+    String getProjectsExtensionName();
+
     enum RepositoryMode {
         PREFER_PROJECT(true),
         PREFER_SETTINGS(false),

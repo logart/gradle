@@ -21,6 +21,7 @@ import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvid
 import org.gradle.api.internal.file.FileCollectionFactory
 import org.gradle.api.internal.file.FileResolver
 import org.gradle.configuration.internal.UserCodeApplicationContext
+import org.gradle.util.TestUtil
 import spock.lang.Specification
 import spock.lang.Subject
 
@@ -36,7 +37,10 @@ class DefaultDependencyResolutionManagementTest extends Specification {
         services,
         fileResolver,
         fileCollectionFactory,
-        dependencyMetaDataProvider)
+        dependencyMetaDataProvider,
+        TestUtil.instantiatorFactory().decorateScheme().instantiator(),
+        TestUtil.objectFactory()
+    )
 
     def "defaults to project repositories"() {
         expect:

@@ -27,6 +27,7 @@ import org.gradle.api.artifacts.dsl.ComponentMetadataHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.ArtifactRepository;
 import org.gradle.api.initialization.DependencyResolutionManagement;
+import org.gradle.api.initialization.dsl.DependenciesModelBuilder;
 import org.gradle.api.internal.artifacts.DependencyManagementServices;
 import org.gradle.api.internal.artifacts.DependencyResolutionServices;
 import org.gradle.api.internal.artifacts.configurations.DependencyMetaDataProvider;
@@ -37,12 +38,15 @@ import org.gradle.api.internal.file.FileCollectionFactory;
 import org.gradle.api.internal.file.FileResolver;
 import org.gradle.api.internal.initialization.RootScriptDomainObjectContext;
 import org.gradle.api.internal.project.ProjectInternal;
+import org.gradle.api.internal.std.DefaultDependenciesModelBuilder;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.configuration.internal.UserCodeApplicationContext;
 import org.gradle.internal.Describables;
 import org.gradle.internal.DisplayName;
 import org.gradle.internal.lazy.Lazy;
+import org.gradle.internal.reflect.Instantiator;
 
 import java.util.List;
 
@@ -53,6 +57,7 @@ public class DefaultDependencyResolutionManagement implements DependencyResoluti
 
     private final Lazy<DependencyResolutionServices> dependencyResolutionServices;
     private final UserCodeApplicationContext context;
+    private final DependenciesModelBuilderInternal dependenciesModelBuilder;
     private final ComponentMetadataHandler registar = new ComponentMetadataRulesRegistar();
     private boolean mutable = true;
     private RepositoryMode repositoryMode = RepositoryMode.PREFER_PROJECT;
@@ -62,8 +67,11 @@ public class DefaultDependencyResolutionManagement implements DependencyResoluti
                                                  DependencyManagementServices dependencyManagementServices,
                                                  FileResolver fileResolver,
                                                  FileCollectionFactory fileCollectionFactory,
-                                                 DependencyMetaDataProvider dependencyMetaDataProvider) {
+                                                 DependencyMetaDataProvider dependencyMetaDataProvider,
+                                                 Instantiator instantiator,
+                                                 ObjectFactory objects) {
         this.context = context;
+        this.dependenciesModelBuilder = instantiator.newInstance(DefaultDependenciesModelBuilder.class, objects);
         this.dependencyResolutionServices = Lazy.locking().of(() -> dependencyManagementServices.create(fileResolver, fileCollectionFactory, dependencyMetaDataProvider, makeUnknownProjectFinder(), RootScriptDomainObjectContext.INSTANCE));
     }
 
@@ -112,8 +120,23 @@ public class DefaultDependencyResolutionManagement implements DependencyResoluti
     }
 
     @Override
+    public void dependenciesModel(Action<? super DependenciesModelBuilder> spec) {
+        spec.execute(dependenciesModelBuilder);
+    }
+
+    @Override
     public RulesMode getRulesMode() {
         return rulesMode;
+    }
+
+    @Override
+    public String getLibrariesExtensionName() {
+        return dependenciesModelBuilder.getLibrariesExtensionName().get();
+    }
+
+    @Override
+    public String getProjectsExtensionName() {
+        return dependenciesModelBuilder.getProjectsExtensionName().get();
     }
 
     @Override
